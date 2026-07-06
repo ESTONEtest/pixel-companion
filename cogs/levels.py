@@ -1,6 +1,4 @@
-import discord
 from discord.ext import commands
-
 from database.database import database
 
 
@@ -15,38 +13,43 @@ class Levels(commands.Cog):
             return
 
         user_id = message.author.id
-        db = database.conn
 
-        cursor = db.execute(
+        database.create_user(user_id)
+
+        database.cursor.execute(
+            "UPDATE users SET xp = xp + 5 WHERE user_id = ?",
+            (user_id,)
+        )
+        database.conn.commit()
+
+        database.cursor.execute(
             "SELECT level, xp FROM users WHERE user_id = ?",
             (user_id,)
         )
 
-        row = cursor.fetchone()
-
-        if row is None:
-            db.execute("INSERT INTO users(user_id) VALUES(?)", (user_id,))
-            db.commit()
+        row = database.cursor.fetchone()
+        if not row:
             return
 
         level, xp = row
 
-        needed = level * 100
+        needed = 100 + (level * 50)
 
         if xp >= needed:
-
             level += 1
             xp = 0
 
-            db.execute(
+            database.cursor.execute(
                 "UPDATE users SET level = ?, xp = ? WHERE user_id = ?",
                 (level, xp, user_id)
             )
-            db.commit()
+            database.conn.commit()
 
             await message.channel.send(
-                f"🎉 {message.author.mention} уровень {level}!"
+                f"🎉 {message.author.mention} новый уровень: {level}"
             )
+
+        await self.bot.process_commands(message)
 
 
 async def setup(bot):

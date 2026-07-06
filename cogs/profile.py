@@ -5,52 +5,39 @@ from database.database import database
 
 
 class Profile(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot):
         self.bot = bot
 
     @commands.command(name="me")
-    async def me(self, ctx: commands.Context):
+    async def me(self, ctx):
 
         user_id = ctx.author.id
-        db = database.conn
 
-        cursor = db.execute(
-            """
-            SELECT level, xp, balance, hp, max_hp, energy, max_energy, hunger, max_hunger
-            FROM users
-            WHERE user_id = ?
-            """,
+        database.create_user(user_id)
+
+        database.cursor.execute(
+            "SELECT level, xp, money FROM users WHERE user_id = ?",
             (user_id,)
         )
 
-        row = cursor.fetchone()
+        row = database.cursor.fetchone()
 
-        if row is None:
-            db.execute(
-                "INSERT INTO users(user_id) VALUES(?)",
-                (user_id,)
-            )
-            db.commit()
-
-            row = (1, 0, 500, 100, 100, 100, 100, 100, 100)
-
-        level, xp, balance, hp, max_hp, energy, max_energy, hunger, max_hunger = row
+        if not row:
+            level, xp, money = 0, 0, 0
+        else:
+            level, xp, money = row
 
         embed = discord.Embed(
-            title="👤 Твой профиль",
-            color=discord.Color.blurple()
+            title=f"📊 Профиль {ctx.author.name}",
+            color=discord.Color.green()
         )
 
-        embed.add_field(name="⭐ Уровень", value=level, inline=True)
-        embed.add_field(name="✨ XP", value=xp, inline=True)
-        embed.add_field(name="💰 Баланс", value=balance, inline=True)
-
-        embed.add_field(name="❤️ HP", value=f"{hp}/{max_hp}", inline=True)
-        embed.add_field(name="⚡ Энергия", value=f"{energy}/{max_energy}", inline=True)
-        embed.add_field(name="🍖 Голод", value=f"{hunger}/{max_hunger}", inline=True)
+        embed.add_field(name="Level", value=level, inline=True)
+        embed.add_field(name="XP", value=xp, inline=True)
+        embed.add_field(name="Money", value=money, inline=True)
 
         await ctx.send(embed=embed)
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot):
     await bot.add_cog(Profile(bot))
