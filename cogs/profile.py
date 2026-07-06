@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-
 from database.database import database
 
 
@@ -12,7 +11,6 @@ class Profile(commands.Cog):
     async def me(self, ctx):
 
         user_id = ctx.author.id
-
         database.create_user(user_id)
 
         database.cursor.execute(
@@ -21,20 +19,16 @@ class Profile(commands.Cog):
         )
 
         row = database.cursor.fetchone()
-
-        if not row:
-            level, xp, money = 0, 0, 0
-        else:
-            level, xp, money = row
+        level, xp, money = row if row else (0, 0, 0)
 
         embed = discord.Embed(
             title=f"📊 Профиль {ctx.author.name}",
             color=discord.Color.green()
         )
 
-        embed.add_field(name="Level", value=level, inline=True)
-        embed.add_field(name="XP", value=xp, inline=True)
-        embed.add_field(name="Money", value=money, inline=True)
+        embed.add_field(name="Level", value=level)
+        embed.add_field(name="XP", value=xp)
+        embed.add_field(name="Money", value=money)
 
         await ctx.send(embed=embed)
 

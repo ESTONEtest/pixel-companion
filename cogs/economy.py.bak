@@ -1,0 +1,10 @@
+@commands.command()
+async def daily(self, ctx):
+
+    db = self.load_db()
+    self.ensure_user(db, ctx.author.id)
+
+    db[str(ctx.author.id)]["coins"] += 50
+    self.save_db(db)
+
+    await ctx.send("💰 +50 coins (daily reward)")

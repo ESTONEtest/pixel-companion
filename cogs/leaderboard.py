@@ -11,11 +11,9 @@ class Leaderboard(commands.Cog):
     @commands.command(name="top")
     async def top(self, ctx: commands.Context):
 
-        db = database.conn
-
-        cursor = db.execute(
+        cursor = database.conn.execute(
             """
-            SELECT user_id, level, xp, balance
+            SELECT user_id, level, xp, money
             FROM users
             ORDER BY level DESC, xp DESC
             LIMIT 10
@@ -35,15 +33,21 @@ class Leaderboard(commands.Cog):
 
         description = ""
 
-        for i, row in enumerate(rows, start=1):
-            user_id, level, xp, balance = row
+        for i, (user_id, level, xp, money) in enumerate(rows, start=1):
 
             user = self.bot.get_user(user_id)
+
+            if user is None:
+                try:
+                    user = await self.bot.fetch_user(user_id)
+                except Exception:
+                    user = None
+
             name = user.name if user else f"User {user_id}"
 
             description += (
                 f"**{i}. {name}**\n"
-                f"⭐ lvl: {level} | XP: {xp} | 💰 {balance}\n\n"
+                f"⭐ Level: {level} | XP: {xp} | 💰 {money}\n\n"
             )
 
         embed.description = description

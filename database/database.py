@@ -4,14 +4,14 @@ import os
 
 class Database:
     def __init__(self):
-        # Railway / Render / локалка — всё будет работать
         db_path = os.path.join(os.path.dirname(__file__), "database.db")
 
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
         self.cursor = self.conn.cursor()
 
+        self.initialize()
+
     def initialize(self):
-        # USERS TABLE (ВАЖНО — ЭТО ТВОЯ ОШИБКА БЫЛА ТУТ)
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,
@@ -21,7 +21,6 @@ class Database:
         )
         """)
 
-        # можно добавить расширение под экономику
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS economy (
             user_id INTEGER PRIMARY KEY,
@@ -30,10 +29,6 @@ class Database:
         """)
 
         self.conn.commit()
-
-    # =========================
-    # HELPERS (чтобы коги не падали)
-    # =========================
 
     def get_user(self, user_id: int):
         self.cursor.execute(
@@ -62,3 +57,6 @@ class Database:
             (level, user_id)
         )
         self.conn.commit()
+
+
+database = Database()

@@ -17,7 +17,7 @@ class Levels(commands.Cog):
         database.create_user(user_id)
 
         database.cursor.execute(
-            "UPDATE users SET xp = xp + 5 WHERE user_id = ?",
+            "UPDATE users SET xp = xp + 5, money = money + 1 WHERE user_id = ?",
             (user_id,)
         )
         database.conn.commit()
@@ -28,7 +28,8 @@ class Levels(commands.Cog):
         )
 
         row = database.cursor.fetchone()
-        if not row:
+
+        if row is None:
             return
 
         level, xp = row
@@ -46,10 +47,8 @@ class Levels(commands.Cog):
             database.conn.commit()
 
             await message.channel.send(
-                f"🎉 {message.author.mention} новый уровень: {level}"
+                f"🎉 {message.author.mention} получил новый уровень: **{level}**!"
             )
-
-        await self.bot.process_commands(message)
 
 
 async def setup(bot):
