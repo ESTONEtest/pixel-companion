@@ -71,8 +71,9 @@ class RPG(commands.Cog):
         )
 
         await rank_manager.update_rank(
-            member
-        )
+              member,
+             player["level"]
+       )
 
         await ctx.send(
             f"❤️ {member.mention} получил `{amount}` HP!\n"
