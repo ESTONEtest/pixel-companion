@@ -1,104 +1,622 @@
 import discord
+
 from discord.ext import commands
 
+from managers.database import database
+
+
 VOICE_CATEGORY_NAME = "🎧 Pixel Voices"
-TRIGGER_CHANNEL_NAME = "➕ create-voice"
+
 
 
 class VoiceSystem(commands.Cog):
+
+
     def __init__(self, bot):
+
         self.bot = bot
 
-    # ─────────────────────────────
-    # CREATE VOICE
-    # ─────────────────────────────
-    @commands.Cog.listener()
-    async def on_voice_state_update(self, member, before, after):
 
-        # вход в триггер
-        if after.channel and after.channel.name == TRIGGER_CHANNEL_NAME:
+
+    # ==================================================
+    # CREATE / DELETE VOICE
+    # ==================================================
+
+
+    @commands.Cog.listener()
+    async def on_voice_state_update(
+        self,
+        member,
+        before,
+        after
+    ):
+
+
+        # ==============================================
+        # CREATE ROOM
+        # ==============================================
+
+
+        if after.channel:
+
 
             guild = member.guild
 
-            category = discord.utils.get(guild.categories, name=VOICE_CATEGORY_NAME)
-            if category is None:
-                category = await guild.create_category(VOICE_CATEGORY_NAME)
 
-            voice_channel = await guild.create_voice_channel(
-                name=f"🎮 {member.display_name}",
-                category=category
+            if after.channel.name == "➕ create-voice":
+
+
+                category = discord.utils.get(
+                    guild.categories,
+                    name=VOICE_CATEGORY_NAME
+                )
+
+
+                if category is None:
+
+                    category = await guild.create_category(
+                        VOICE_CATEGORY_NAME
+                    )
+
+
+
+                voice = await guild.create_voice_channel(
+
+                    name=f"🎧 {member.name}",
+
+                    category=category
+
+                )
+
+
+
+                text = await guild.create_text_channel(
+
+                    name=f"💬-{member.name}",
+
+                    category=category
+
+                )
+
+
+
+                await member.move_to(
+                    voice
+                )
+
+
+
+                database.execute(
+                    """
+                    INSERT OR REPLACE INTO voice_rooms
+
+                    (
+                        owner_id,
+                        channel_id,
+                        channel_name
+                    )
+
+                    VALUES (?, ?, ?)
+
+                    """,
+                    (
+                        member.id,
+                        voice.id,
+                        voice.name
+                    )
+                )
+
+
+
+                embed = discord.Embed(
+
+                    title="🎧 Управление комнатой",
+
+                    description=
+                    """
+👑 **Команды владельца**
+
+`!vrename название`
+✏ изменить название
+
+`!vlimit число`
+👥 изменить лимит
+
+`!vlock`
+🔒 закрыть комнату
+
+`!vunlock`
+🔓 открыть комнату
+
+`!vkick @user`
+👢 выгнать пользователя
+
+`!vban @user`
+🚫 запретить вход
+
+`!vunban @user`
+✅ снять запрет
+
+
+ℹ️ Команды доступны только владельцу.
+                    """,
+
+                    color=discord.Color.blurple()
+
+                )
+
+
+                await text.send(
+                    embed=embed
+                )
+
+
+
+        # ==============================================
+        # DELETE EMPTY ROOM
+        # ==============================================
+
+
+        if before.channel:
+
+
+            channel = before.channel
+
+
+
+            room = database.fetchone(
+                """
+                SELECT *
+
+                FROM voice_rooms
+
+                WHERE channel_id = ?
+
+                """,
+                (
+                    channel.id,
+                )
             )
 
-            await member.move_to(voice_channel)
 
-            # добавляем панель управления
-            await self.send_panel(voice_channel, member)
 
-        # авто удаление
-        if before.channel and before.channel.name != TRIGGER_CHANNEL_NAME:
-            if len(before.channel.members) == 0:
-                try:
-                    await before.channel.delete()
-                except:
-                    pass
+            if room:
 
-    # ─────────────────────────────
-    # VOICE CONTROL PANEL
-    # ─────────────────────────────
-    async def send_panel(self, channel, owner):
 
-        embed = discord.Embed(
-            title="🎧 Voice Panel",
-            description="Управление твоей комнатой",
-            color=0x8A2BE2
+                if len(channel.members) == 0:
+
+
+
+                    database.execute(
+                        """
+                        DELETE FROM voice_rooms
+
+                        WHERE channel_id = ?
+
+                        """,
+                        (
+                            channel.id,
+                        )
+                    )
+
+
+                    database.execute(
+                        """
+                        DELETE FROM voice_bans
+
+                        WHERE channel_id = ?
+
+                        """,
+                        (
+                            channel.id,
+                        )
+                    )
+
+
+                    text = discord.utils.get(
+
+                        channel.guild.text_channels,
+
+                        name=f"💬-{room['channel_name'].replace('🎧 ','')}"
+
+                    )
+
+
+                    if text:
+
+                        await text.delete()
+
+
+
+                    await channel.delete()
+
+
+
+    # ==================================================
+    # OWNER CHECK
+    # ==================================================
+
+
+    def get_owner_room(
+        self,
+        user_id
+    ):
+
+
+        return database.fetchone(
+
+            """
+            SELECT *
+
+            FROM voice_rooms
+
+            WHERE owner_id = ?
+
+            """,
+
+            (
+                user_id,
+            )
+
         )
 
-        embed.add_field(
-            name="🎮 Команды",
-            value=(
-                "🔒 lock — закрыть комнату\n"
-                "🔓 unlock — открыть комнату\n"
-                "✏️ rename — изменить название\n"
-                "👢 kick — выгнать участника"
-            ),
-            inline=False
+
+
+    # ==================================================
+    # RENAME
+    # ==================================================
+
+
+    @commands.command(
+        name="vrename"
+    )
+    async def rename(
+        self,
+        ctx,
+        *,
+        name
+    ):
+
+
+        room = self.get_owner_room(
+            ctx.author.id
         )
 
-        await channel.send(content=owner.mention, embed=embed)
+
+        if not room:
+
+            return
 
 
-    # ─────────────────────────────
-    # TEXT COMMANDS (inside voice category)
-    # ─────────────────────────────
-    @commands.command()
-    async def lock(self, ctx):
-        if ctx.author.voice:
-            channel = ctx.author.voice.channel
-            await channel.set_permissions(ctx.guild.default_role, connect=False)
-            await ctx.send("🔒 Комната закрыта")
 
-    @commands.command()
-    async def unlock(self, ctx):
-        if ctx.author.voice:
-            channel = ctx.author.voice.channel
-            await channel.set_permissions(ctx.guild.default_role, connect=True)
-            await ctx.send("🔓 Комната открыта")
+        channel = ctx.guild.get_channel(
+            room["channel_id"]
+        )
 
-    @commands.command()
-    async def rename(self, ctx, *, name):
-        if ctx.author.voice:
-            channel = ctx.author.voice.channel
-            await channel.edit(name=name)
-            await ctx.send(f"✏️ Новое имя: {name}")
 
-    @commands.command()
-    async def kick(self, ctx, member: discord.Member):
-        if ctx.author.voice:
-            channel = ctx.author.voice.channel
-            if member.voice and member.voice.channel == channel:
-                await member.move_to(None)
-                await ctx.send(f"👢 {member.name} кикнут")
+
+        await channel.edit(
+            name=f"🎧 {name}"
+        )
+
+
+        await ctx.send(
+            "✏ Название комнаты изменено."
+        )
+
+
+
+    # ==================================================
+    # LIMIT
+    # ==================================================
+
+
+    @commands.command(
+        name="vlimit"
+    )
+    async def limit(
+        self,
+        ctx,
+        amount:int
+    ):
+
+
+        room = self.get_owner_room(
+            ctx.author.id
+        )
+
+
+        if not room:
+
+            return
+
+
+
+        if amount < 0 or amount > 99:
+
+            await ctx.send(
+                "❌ Лимит от 0 до 99."
+            )
+
+            return
+
+
+
+        channel = ctx.guild.get_channel(
+            room["channel_id"]
+        )
+
+
+
+        await channel.edit(
+            user_limit=amount
+        )
+
+
+
+        database.execute(
+            """
+            UPDATE voice_rooms
+
+            SET user_limit = ?
+
+            WHERE channel_id = ?
+
+            """,
+            (
+                amount,
+                channel.id
+            )
+        )
+
+
+        await ctx.send(
+            f"👥 Лимит: {amount}"
+        )
+
+
+
+    # ==================================================
+    # LOCK
+    # ==================================================
+
+
+    @commands.command(
+        name="vlock"
+    )
+    async def lock(
+        self,
+        ctx
+    ):
+
+
+        room = self.get_owner_room(
+            ctx.author.id
+        )
+
+
+        if not room:
+
+            return
+
+
+
+        channel = ctx.guild.get_channel(
+            room["channel_id"]
+        )
+
+
+
+        await channel.set_permissions(
+
+            ctx.guild.default_role,
+
+            connect=False
+
+        )
+
+
+        await ctx.send(
+            "🔒 Комната закрыта."
+        )
+
+
+
+    # ==================================================
+    # UNLOCK
+    # ==================================================
+
+
+    @commands.command(
+        name="vunlock"
+    )
+    async def unlock(
+        self,
+        ctx
+    ):
+
+
+        room = self.get_owner_room(
+            ctx.author.id
+        )
+
+
+        if not room:
+
+            return
+
+
+
+        channel = ctx.guild.get_channel(
+            room["channel_id"]
+        )
+
+
+
+        await channel.set_permissions(
+
+            ctx.guild.default_role,
+
+            connect=True
+
+        )
+
+
+        await ctx.send(
+            "🔓 Комната открыта."
+        )
+
+
+
+    # ==================================================
+    # KICK
+    # ==================================================
+
+
+    @commands.command(
+        name="vkick"
+    )
+    async def kick(
+        self,
+        ctx,
+        member: discord.Member
+    ):
+
+
+        room = self.get_owner_room(
+            ctx.author.id
+        )
+
+
+        if not room:
+
+            return
+
+
+
+        channel = ctx.guild.get_channel(
+            room["channel_id"]
+        )
+
+
+
+        if member.voice and member.voice.channel == channel:
+
+
+            await member.move_to(
+                None
+            )
+
+
+            await ctx.send(
+                f"👢 {member.mention} удалён."
+            )
+
+
+
+    # ==================================================
+    # BAN
+    # ==================================================
+
+
+    @commands.command(
+        name="vban"
+    )
+    async def ban(
+        self,
+        ctx,
+        member:discord.Member
+    ):
+
+
+        room = self.get_owner_room(
+            ctx.author.id
+        )
+
+
+        if not room:
+
+            return
+
+
+
+        database.execute(
+            """
+            INSERT INTO voice_bans
+
+            (
+                channel_id,
+                user_id
+            )
+
+            VALUES (?,?)
+
+            """,
+            (
+                room["channel_id"],
+                member.id
+            )
+        )
+
+
+        await ctx.send(
+            f"🚫 {member.mention} заблокирован."
+        )
+
+
+
+    # ==================================================
+    # UNBAN
+    # ==================================================
+
+
+    @commands.command(
+        name="vunban"
+    )
+    async def unban(
+        self,
+        ctx,
+        member:discord.Member
+    ):
+
+
+        room = self.get_owner_room(
+            ctx.author.id
+        )
+
+
+        if not room:
+
+            return
+
+
+
+        database.execute(
+            """
+            DELETE FROM voice_bans
+
+            WHERE channel_id = ?
+
+            AND user_id = ?
+
+            """,
+            (
+                room["channel_id"],
+                member.id
+            )
+        )
+
+
+        await ctx.send(
+            "✅ Пользователь разблокирован."
+        )
+
 
 
 async def setup(bot):
-    await bot.add_cog(VoiceSystem(bot))
+
+    print("✅ VOICE COG LOADED")
+
+    await bot.add_cog(
+        VoiceSystem(bot)
+    )

@@ -1,56 +1,121 @@
 import asyncio
-import os
-from pathlib import Path
+import traceback
 
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
 
-load_dotenv()
+from config import TOKEN
+from utils.logger import logger
 
-TOKEN = os.getenv("DISCORD_TOKEN")
+# ==================================================
+# DATABASE
+# ==================================================
+
+from managers.database import database
+
+# ==================================================
+# BOT
+# ==================================================
 
 intents = discord.Intents.default()
+
 intents.message_content = True
 intents.members = True
+intents.guilds = True
+intents.voice_states = True
 
 bot = commands.Bot(
     command_prefix="!",
-    intents=intents,
-    help_command=None
+    intents=intents
 )
 
-
-async def load_cogs():
-    for file in Path("cogs").glob("*.py"):
-        if file.name.startswith("_"):
-            continue
-
-        try:
-            await bot.load_extension(f"cogs.{file.stem}")
-            print(f"LOADED: cogs.{file.stem}")
-        except Exception as e:
-            print(f"ERROR LOADING {file.stem}: {e}")
-
+# ==================================================
+# EVENTS
+# ==================================================
 
 @bot.event
 async def on_ready():
-    print(f"BOT ONLINE: {bot.user}")
 
+    logger.info("=" * 50)
+    logger.info(f"Logged in as: {bot.user}")
+    logger.info(f"Guilds: {len(bot.guilds)}")
+    logger.info("Pixel Companion RPG v2.0 is ONLINE!")
+    logger.info("=" * 50)
+
+    logger.info("Loaded commands:")
+
+    for command in bot.commands:
+        logger.info(f" - !{command.name}")
+
+
+# ==================================================
+# COMMAND ERRORS
+# ==================================================
 
 @bot.event
-async def setup_hook():
-    await load_cogs()
+async def on_command_error(ctx, error):
 
+    logger.error(f"Command '{ctx.command}' failed:")
+
+    traceback.print_exception(
+        type(error),
+        error,
+        error.__traceback__
+    )
+
+# ==================================================
+# COGS
+# ==================================================
+
+async def load_cogs():
+
+    cogs = [
+        "profile",
+        "events",
+        "rpg",
+        "level",
+        "inventory",
+        "items",
+        "loot",
+        "equipment",
+        "shop",
+        "daily",
+        "battle",
+        "voice",
+        "stream",
+        "welcome",
+    ]
+
+    for cog in cogs:
+
+        try:
+
+            await bot.load_extension(
+                f"cogs.{cog}"
+            )
+
+            logger.info(
+                f"✅ Loaded cog: {cog}"
+            )
+
+        except Exception as error:
+
+            logger.error(
+                f"❌ Failed loading {cog}: {error}"
+            )
+
+# ==================================================
+# START
+# ==================================================
 
 async def main():
-    if not TOKEN:
-        print("NO TOKEN")
-        return
 
     async with bot:
+
+        await load_cogs()
+
         await bot.start(TOKEN)
 
-
 if __name__ == "__main__":
+
     asyncio.run(main())
