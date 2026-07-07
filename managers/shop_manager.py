@@ -5,13 +5,17 @@ from utils.logger import logger
 
 class ShopManager:
 
-
     # ==================================================
     # SHOP ITEMS
     # ==================================================
 
     SHOP = {
 
+        "potion": {
+
+            "price": 75
+
+        },
 
         "wooden_sword": {
 
@@ -19,13 +23,11 @@ class ShopManager:
 
         },
 
-
         "iron_sword": {
 
             "price": 500
 
         },
-
 
         "leather_armor": {
 
@@ -33,17 +35,13 @@ class ShopManager:
 
         },
 
-
         "crystal": {
 
             "price": 50
 
         }
 
-
     }
-
-
 
     # ==================================================
     # GET SHOP
@@ -52,8 +50,6 @@ class ShopManager:
     def get_shop(self):
 
         return self.SHOP
-
-
 
     # ==================================================
     # GET PRICE
@@ -64,20 +60,15 @@ class ShopManager:
         item_id: str
     ):
 
-
         item = self.SHOP.get(
             item_id
         )
-
 
         if not item:
 
             return None
 
-
         return item["price"]
-
-
 
     # ==================================================
     # BUY ITEM
@@ -89,34 +80,31 @@ class ShopManager:
         item_id: str
     ):
 
+        if not item_manager.exists(
+            item_id
+        ):
+
+            return False
 
         price = self.get_price(
             item_id
         )
 
-
         if price is None:
 
             return False
-
-
 
         player = database.get_user(
             user_id
         )
 
-
         if not player:
 
             return False
 
-
-
         if player["coins"] < price:
 
             return False
-
-
 
         database.execute(
             """
@@ -130,14 +118,11 @@ class ShopManager:
             )
         )
 
-
         logger.info(
             f"{user_id} bought {item_id}"
         )
 
-
         return True
-
 
 
 shop_manager = ShopManager()

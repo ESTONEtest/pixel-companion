@@ -8,15 +8,11 @@ from managers.player_manager import player_manager
 from utils.logger import logger
 
 
-
 class LootSystem(commands.Cog):
-
 
     def __init__(self, bot):
 
         self.bot = bot
-
-
 
     # ==================================================
     # LOOT CHANCE
@@ -28,21 +24,23 @@ class LootSystem(commands.Cog):
         message
     ):
 
-
         if message.author.bot:
 
             return
 
+        ctx = await self.bot.get_context(
+            message
+        )
 
+        if ctx.valid:
+
+            return
 
         user_id = message.author.id
-
-
 
         player = player_manager.get_player(
             user_id
         )
-
 
         if not player:
 
@@ -51,38 +49,27 @@ class LootSystem(commands.Cog):
                 message.author.name
             )
 
-
-
-        # 5% шанс найти предмет
-
         chance = random.randint(
             1,
             100
         )
 
-
-
         if chance > 5:
 
             return
 
-
-
         loot_table = [
 
+            "wood",
+            "iron",
             "crystal",
-            "wooden_sword",
-            "leather_armor"
+            "potion"
 
         ]
-
-
 
         item_id = random.choice(
             loot_table
         )
-
-
 
         inventory_manager.add_item(
             user_id,
@@ -90,25 +77,22 @@ class LootSystem(commands.Cog):
             1
         )
 
-
-
         item = item_manager.get_item(
             item_id
         )
 
+        if not item:
 
+            return
 
         await message.channel.send(
             f"🎁 {message.author.mention} нашёл предмет!\n"
             f"{item['name']} x1"
         )
 
-
-
         logger.info(
             f"Loot drop: {message.author.name} -> {item_id}"
         )
-
 
 
 async def setup(bot):

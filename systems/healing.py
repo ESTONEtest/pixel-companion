@@ -11,7 +11,25 @@ class HealingSystem:
         max_hp: int
     ) -> int:
 
-        return min(current_hp + amount, max_hp)
+        current_hp = max(
+            0,
+            current_hp
+        )
+
+        amount = max(
+            0,
+            amount
+        )
+
+        max_hp = max(
+            1,
+            max_hp
+        )
+
+        return min(
+            current_hp + amount,
+            max_hp
+        )
 
 
 healing_system = HealingSystem()

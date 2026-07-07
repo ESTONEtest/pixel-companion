@@ -6,7 +6,6 @@ from utils.logger import logger
 
 class PlayerManager:
 
-
     # ==================================================
     # CREATE PLAYER
     # ==================================================
@@ -20,21 +19,16 @@ class PlayerManager:
         if database.user_exists(user_id):
             return False
 
-
         database.create_user(
             user_id,
             username
         )
 
-
         logger.info(
             f"New player created: {username}"
         )
 
-
         return True
-
-
 
     # ==================================================
     # GET PLAYER
@@ -48,8 +42,6 @@ class PlayerManager:
         return database.get_user(
             user_id
         )
-
-
 
     # ==================================================
     # XP
@@ -65,13 +57,10 @@ class PlayerManager:
             user_id
         )
 
-
         if not player:
             return False
 
-
         new_xp = player["xp"] + amount
-
 
         database.execute(
             """
@@ -85,15 +74,11 @@ class PlayerManager:
             )
         )
 
-
         self.update_level(
             user_id
         )
 
-
         return True
-
-
 
     # ==================================================
     # LEVEL + RANK CHECK
@@ -108,21 +93,16 @@ class PlayerManager:
             user_id
         )
 
-
         if not player:
             return False
 
-
         old_level = player["level"]
-
 
         new_level = level_manager.get_level(
             player["xp"]
         )
 
-
         if new_level != old_level:
-
 
             database.execute(
                 """
@@ -136,21 +116,17 @@ class PlayerManager:
                 )
             )
 
-
             logger.info(
                 f"Player {user_id} level up: {old_level} -> {new_level}"
             )
-
 
             old_rank = rank_manager.get_rank(
                 old_level
             )
 
-
             new_rank = rank_manager.get_rank(
                 new_level
             )
-
 
             if old_rank != new_rank:
 
@@ -158,13 +134,9 @@ class PlayerManager:
                     f"Player {user_id} rank up: {old_rank} -> {new_rank}"
                 )
 
-
             return new_level
 
-
         return False
-
-
 
     # ==================================================
     # SET LEVEL (TEST / ADMIN)
@@ -180,15 +152,12 @@ class PlayerManager:
             user_id
         )
 
-
         if not player:
             return False
-
 
         xp = level_manager.get_xp_for_level(
             level
         )
-
 
         database.execute(
             """
@@ -203,15 +172,11 @@ class PlayerManager:
             )
         )
 
-
         logger.info(
             f"Player {user_id} level manually set to {level}"
         )
 
-
         return True
-
-
 
     # ==================================================
     # MESSAGES
@@ -233,7 +198,7 @@ class PlayerManager:
             )
         )
 
-
+        return True
 
     # ==================================================
     # HP
@@ -249,13 +214,18 @@ class PlayerManager:
             user_id
         )
 
-
         if not player:
             return False
 
+        max_hp = player["max_hp"]
 
-        new_hp = player["hp"] + amount
-
+        new_hp = max(
+            0,
+            min(
+                player["hp"] + amount,
+                max_hp
+            )
+        )
 
         database.execute(
             """
@@ -269,10 +239,48 @@ class PlayerManager:
             )
         )
 
-
         return True
 
+    # ==================================================
+    # SET HP
+    # ==================================================
 
+    def set_hp(
+        self,
+        user_id: int,
+        hp: int
+    ):
+
+        player = self.get_player(
+            user_id
+        )
+
+        if not player:
+            return False
+
+        max_hp = player["max_hp"]
+
+        new_hp = max(
+            0,
+            min(
+                hp,
+                max_hp
+            )
+        )
+
+        database.execute(
+            """
+            UPDATE users
+            SET hp = ?
+            WHERE user_id = ?
+            """,
+            (
+                new_hp,
+                user_id
+            )
+        )
+
+        return True
 
     # ==================================================
     # COINS
@@ -288,13 +296,10 @@ class PlayerManager:
             user_id
         )
 
-
         if not player:
             return False
 
-
         new_coins = player["coins"] + amount
-
 
         database.execute(
             """
@@ -308,10 +313,7 @@ class PlayerManager:
             )
         )
 
-
         return True
-
-
 
     # ==================================================
     # STATISTICS
@@ -333,6 +335,23 @@ class PlayerManager:
             )
         )
 
+    def add_monster_kill(
+        self,
+        user_id: int
+    ):
+
+        database.execute(
+            """
+            UPDATE statistics
+            SET monsters_killed = monsters_killed + 1
+            WHERE user_id = ?
+            """,
+            (
+                user_id,
+            )
+        )
+
+        return True
 
 
 player_manager = PlayerManager()

@@ -11,32 +11,28 @@ class LevelSystem(commands.Cog):
 
         self.bot = bot
 
-
-
     @commands.Cog.listener()
     async def on_message(
         self,
         message
     ):
 
-        # Игнорируем ботов
         if message.author.bot:
             return
 
+        ctx = await self.bot.get_context(
+            message
+        )
+
+        if ctx.valid:
+            return
 
         user_id = message.author.id
         username = message.author.name
 
-
-
-        # Получаем игрока
-
         player = player_manager.get_player(
             user_id
         )
-
-
-        # Если игрока нет - создаём
 
         if not player:
 
@@ -45,86 +41,55 @@ class LevelSystem(commands.Cog):
                 username
             )
 
-
             player = player_manager.get_player(
                 user_id
             )
 
-
+        if not player:
+            return
 
         old_level = player["level"]
-
 
         old_rank = rank_manager.get_rank(
             old_level
         )
-
-
-
-        # Добавляем XP
 
         player_manager.add_xp(
             user_id,
             10
         )
 
-
-
-        # Добавляем сообщение в статистику
-
         player_manager.add_message(
             user_id
         )
-
-
-
-        # Получаем обновлённые данные
 
         updated_player = player_manager.get_player(
             user_id
         )
 
-
         new_level = updated_player["level"]
-
 
         new_rank = rank_manager.get_rank(
             new_level
         )
 
-
-
-        # ==============================
-        # LEVEL UP
-        # ==============================
-
         if new_level > old_level:
-
 
             await message.channel.send(
                 f"🎉 {message.author.mention} повысил уровень!\n"
                 f"⭐ Новый уровень: `{new_level}`"
             )
 
-
-
-        # ==============================
-        # RANK UP
-        # ==============================
-
         if new_rank != old_rank:
-
 
             max_hp = rank_manager.get_max_hp(
                 new_rank
             )
 
-
             await rank_manager.update_rank(
                 message.author,
                 new_level
             )
-
 
             await message.channel.send(
                 f"🏆 {message.author.mention} получил новый ранг!\n"
@@ -132,12 +97,9 @@ class LevelSystem(commands.Cog):
                 f"❤️ Максимальный HP: `{max_hp}`"
             )
 
-
-
         logger.info(
             f"{username}: +10 XP"
         )
-
 
 
 async def setup(bot):

@@ -7,15 +7,11 @@ from managers.item_manager import item_manager
 from managers.player_manager import player_manager
 
 
-
 class Items(commands.Cog):
-
 
     def __init__(self, bot):
 
         self.bot = bot
-
-
 
     # ==================================================
     # GIVE ITEM
@@ -31,23 +27,27 @@ class Items(commands.Cog):
         amount: int = 1
     ):
 
+        if amount <= 0:
+
+            await ctx.send(
+                "❌ Количество должно быть больше нуля."
+            )
+
+            return
 
         if not item_manager.exists(
             item_id
         ):
 
             await ctx.send(
-                "❌ Такого предмета нет!"
+                "❌ Такого предмета нет."
             )
 
             return
 
-
-
         player = player_manager.get_player(
             member.id
         )
-
 
         if not player:
 
@@ -56,27 +56,20 @@ class Items(commands.Cog):
                 member.name
             )
 
-
-
         inventory_manager.add_item(
             member.id,
             item_id,
             amount
         )
 
-
         item = item_manager.get_item(
             item_id
         )
-
-
 
         await ctx.send(
             f"🎁 {member.mention} получил "
             f"`{item['name']}` x`{amount}`"
         )
-
-
 
     # ==================================================
     # REMOVE ITEM
@@ -92,6 +85,23 @@ class Items(commands.Cog):
         amount: int = 1
     ):
 
+        if amount <= 0:
+
+            await ctx.send(
+                "❌ Количество должно быть больше нуля."
+            )
+
+            return
+
+        if not item_manager.exists(
+            item_id
+        ):
+
+            await ctx.send(
+                "❌ Такого предмета нет."
+            )
+
+            return
 
         result = inventory_manager.remove_item(
             member.id,
@@ -99,25 +109,22 @@ class Items(commands.Cog):
             amount
         )
 
-
         if result:
 
             await ctx.send(
-                "🗑 Предмет удалён"
+                "🗑 Предмет удалён."
             )
 
         else:
 
             await ctx.send(
-                "❌ У игрока нет этого предмета"
+                "❌ У игрока нет этого предмета."
             )
-
 
 
 async def setup(bot):
 
     print("✅ ITEMS COG LOADED")
-
 
     await bot.add_cog(
         Items(bot)

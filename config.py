@@ -1,5 +1,7 @@
 import os
+
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
@@ -8,9 +10,14 @@ load_dotenv()
 # BOT
 # ==========================
 
-TOKEN = os.getenv("TOKEN")
+TOKEN = os.getenv(
+    "TOKEN"
+)
 
-PREFIX = "!"
+PREFIX = os.getenv(
+    "PREFIX",
+    "!"
+)
 
 
 # ==========================
@@ -57,23 +64,35 @@ VOICE_XP_PER_MINUTE = 4
 # DATABASE
 # ==========================
 
-DATABASE = "database/users.db"
+DATABASE = os.getenv(
+    "DATABASE",
+    "database/users.db"
+)
 
 
 # ==========================
 # LOGS
 # ==========================
 
-LOG_FILE = "logs/bot.log"
+LOG_FILE = os.getenv(
+    "LOG_FILE",
+    "logs/bot.log"
+)
 
 
 # ==========================
 # VOICE
 # ==========================
 
-VOICE_CATEGORY_NAME = "🎧 Pixel Voices"
+VOICE_CATEGORY_NAME = os.getenv(
+    "VOICE_CATEGORY_NAME",
+    "🎧 Pixel Voices"
+)
 
-VOICE_CREATE_CHANNEL = "➕ create-voice"
+VOICE_CREATE_CHANNEL = os.getenv(
+    "VOICE_CREATE_CHANNEL",
+    "➕ create-voice"
+)
 
 
 # ==========================
@@ -87,8 +106,18 @@ STREAM_CHANNEL_ID = int(
     )
 )
 
+TWITCH_CHANNEL = os.getenv(
+    "TWITCH_CHANNEL",
+    "captain_icecream"
+)
 
-TWITCH_CHANNEL = "captain_icecream"
+TWITCH_CLIENT_ID = os.getenv(
+    "TWITCH_CLIENT_ID"
+)
+
+TWITCH_CLIENT_SECRET = os.getenv(
+    "TWITCH_CLIENT_SECRET"
+)
 
 
 # ==========================

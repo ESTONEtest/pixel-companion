@@ -1,4 +1,5 @@
 import discord
+
 from discord.ext import commands
 
 from managers.player_manager import player_manager
@@ -10,6 +11,9 @@ class RPG(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    # ==================================================
+    # ADD HP
+    # ==================================================
 
     @commands.command(name="addhp")
     @commands.has_permissions(administrator=True)
@@ -20,11 +24,9 @@ class RPG(commands.Cog):
         amount: int
     ):
 
-
         player = player_manager.get_player(
             member.id
         )
-
 
         if not player:
 
@@ -37,52 +39,46 @@ class RPG(commands.Cog):
                 member.id
             )
 
+        if not player:
 
-        # Получаем ранг игрока
+            await ctx.send(
+                "❌ Не удалось найти или создать игрока."
+            )
+
+            return
+
         rank = rank_manager.get_rank(
             player["level"]
         )
 
-
-        # Максимальный HP по рангу
         max_hp = rank_manager.get_max_hp(
             rank
         )
 
-
         current_hp = player["hp"]
 
-
-        new_hp = current_hp + amount
-
-
-        # Ограничение HP
-        if new_hp > max_hp:
-
-            new_hp = max_hp
-
-
-
-        # Сохраняем HP
-        database = player_manager
-
-        database.add_hp(
-            member.id,
-            new_hp - current_hp
+        new_hp = max(
+            0,
+            min(
+                current_hp + amount,
+                max_hp
+            )
         )
 
+        player_manager.set_hp(
+            member.id,
+            new_hp
+        )
 
         await rank_manager.update_rank(
             member
         )
-
 
         await ctx.send(
             f"❤️ {member.mention} получил `{amount}` HP!\n"
             f"🏆 Rank: `{rank}`\n"
             f"❤️ HP: `{new_hp}/{max_hp}`"
         )
-
 
 
 async def setup(bot):

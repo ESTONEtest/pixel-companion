@@ -4,7 +4,6 @@ from utils.logger import logger
 
 class InventoryManager:
 
-
     # ==================================================
     # ADD ITEM
     # ==================================================
@@ -16,6 +15,8 @@ class InventoryManager:
         quantity: int = 1
     ):
 
+        if quantity <= 0:
+            return False
 
         existing = database.fetchone(
             """
@@ -29,7 +30,6 @@ class InventoryManager:
                 item_id
             )
         )
-
 
         if existing:
 
@@ -46,7 +46,6 @@ class InventoryManager:
                     item_id
                 )
             )
-
 
         else:
 
@@ -67,15 +66,11 @@ class InventoryManager:
                 )
             )
 
-
         logger.info(
             f"Item added: {item_id} x{quantity} to {user_id}"
         )
 
-
         return True
-
-
 
     # ==================================================
     # REMOVE ITEM
@@ -88,6 +83,8 @@ class InventoryManager:
         quantity: int = 1
     ):
 
+        if quantity <= 0:
+            return False
 
         item = database.fetchone(
             """
@@ -102,19 +99,13 @@ class InventoryManager:
             )
         )
 
-
         if not item:
 
             return False
 
-
-
         new_quantity = item["quantity"] - quantity
 
-
-
         if new_quantity <= 0:
-
 
             database.execute(
                 """
@@ -128,9 +119,7 @@ class InventoryManager:
                 )
             )
 
-
         else:
-
 
             database.execute(
                 """
@@ -146,10 +135,7 @@ class InventoryManager:
                 )
             )
 
-
         return True
-
-
 
     # ==================================================
     # GET INVENTORY
@@ -159,7 +145,6 @@ class InventoryManager:
         self,
         user_id: int
     ):
-
 
         return database.fetchall(
             """
@@ -172,8 +157,6 @@ class InventoryManager:
             )
         )
 
-
-
     # ==================================================
     # CLEAR INVENTORY
     # ==================================================
@@ -182,7 +165,6 @@ class InventoryManager:
         self,
         user_id: int
     ):
-
 
         database.execute(
             """
@@ -194,11 +176,11 @@ class InventoryManager:
             )
         )
 
-
         logger.info(
             f"Inventory cleared: {user_id}"
         )
 
+        return True
 
 
 inventory_manager = InventoryManager()

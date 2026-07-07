@@ -15,6 +15,11 @@ class CriticalSystem:
         luck: int
     ) -> bool:
 
+        luck = max(
+            0,
+            luck or 0
+        )
+
         chance = max(
             0,
             min(
