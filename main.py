@@ -137,6 +137,10 @@ async def load_cogs():
 
         "welcome",
 
+        "test_level",
+
+        "test_roles"
+
     ]
 
 

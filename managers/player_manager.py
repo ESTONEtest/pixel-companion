@@ -167,6 +167,53 @@ class PlayerManager:
 
 
     # ==================================================
+    # SET LEVEL (TEST / ADMIN)
+    # ==================================================
+
+    def set_level(
+        self,
+        user_id: int,
+        level: int
+    ):
+
+        player = self.get_player(
+            user_id
+        )
+
+
+        if not player:
+            return False
+
+
+        xp = level_manager.get_xp_for_level(
+            level
+        )
+
+
+        database.execute(
+            """
+            UPDATE users
+            SET level = ?, xp = ?
+            WHERE user_id = ?
+            """,
+            (
+                level,
+                xp,
+                user_id
+            )
+        )
+
+
+        logger.info(
+            f"Player {user_id} level manually set to {level}"
+        )
+
+
+        return True
+
+
+
+    # ==================================================
     # MESSAGES
     # ==================================================
 
