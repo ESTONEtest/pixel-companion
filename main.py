@@ -7,7 +7,6 @@ from discord.ext import commands
 from config import TOKEN
 from utils.logger import logger
 
-
 # ==================================================
 # TOKEN CHECK
 # ==================================================
@@ -108,7 +107,6 @@ async def on_command_error(
 
 async def load_cogs():
 
-
     cogs = [
 
         "profile",
@@ -139,7 +137,9 @@ async def load_cogs():
 
         "test_level",
 
-        "test_roles"
+        "test_roles",
+
+        "game_roles"
 
     ]
 
@@ -174,7 +174,6 @@ async def load_cogs():
 
 async def main():
 
-
     async with bot:
 
 
@@ -188,6 +187,5 @@ async def main():
 
 
 if __name__ == "__main__":
-
 
     asyncio.run(main())
