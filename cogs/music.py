@@ -13,7 +13,7 @@ from music.player import MusicPlayer
 
 MUSIC_FOLDER = "music/songs"
 
-COMMAND_CHANNEL_NAME = "🌙┃эхо-души"
+COMMAND_CHANNEL_ID = 1525725228662259782
 
 MUSIC_VOICE_CHANNEL_ID = 1525683653999329423
 
@@ -25,6 +25,7 @@ MUSIC_VOICE_CHANNEL_ID = 1525683653999329423
 
 class MusicControls(View):
 
+
     def __init__(self, player):
 
         super().__init__(
@@ -32,6 +33,32 @@ class MusicControls(View):
         )
 
         self.player = player
+
+
+
+    # Только пользователь, написавший !album, может нажимать кнопки
+    async def interaction_check(
+        self,
+        interaction: discord.Interaction
+    ):
+
+
+        if interaction.user.id == self.player.controller_id:
+
+            return True
+
+
+
+        await interaction.response.send_message(
+
+            "🔒 Управлять музыкой может только пользователь, запустивший `!album`.",
+
+            ephemeral=True
+
+        )
+
+
+        return False
 
 
 
@@ -149,11 +176,42 @@ class MusicControls(View):
 
 
 
+    @discord.ui.button(
+        emoji="🔀",
+        style=discord.ButtonStyle.secondary
+    )
+    async def shuffle(
+        self,
+        interaction: discord.Interaction,
+        button: Button
+    ):
+
+        shuffled = self.player.shuffle_queue()
+
+
+        if shuffled:
+
+            message = "🔀 Оставшиеся треки перемешаны"
+
+
+        else:
+
+            message = "🔀 В очереди недостаточно треков"
+
+
+        await interaction.response.send_message(
+            message,
+            ephemeral=True
+        )
+
+
+
 # ==================================================
 # MUSIC COG
 # ==================================================
 
 class Music(commands.Cog):
+
 
     def __init__(self, bot):
 
@@ -165,11 +223,36 @@ class Music(commands.Cog):
 
     def check_command_channel(self, ctx):
 
-        return ctx.channel.name == COMMAND_CHANNEL_NAME
+        return ctx.channel.id == COMMAND_CHANNEL_ID
+
+
+
+    async def check_controller(self, ctx):
+
+
+        if self.player.controller_id is None:
+
+            return True
+
+
+
+        if self.player.controller_id == ctx.author.id:
+
+            return True
+
+
+
+        await ctx.send(
+            "🔒 Музыкой сейчас управляет пользователь, запустивший `!album`."
+        )
+
+
+        return False
 
 
 
     def get_songs(self):
+
 
         if not os.path.exists(MUSIC_FOLDER):
 
@@ -180,6 +263,7 @@ class Music(commands.Cog):
 
 
         for file in os.listdir(MUSIC_FOLDER):
+
 
             if file.endswith(
                 (
@@ -210,8 +294,14 @@ class Music(commands.Cog):
         if not self.check_command_channel(ctx):
 
             await ctx.send(
-                "🎧 Команды музыки доступны только в 🌙┃эхо-души"
+                "🎧 Команды музыки доступны только в музыкальном канале"
             )
+
+            return
+
+
+
+        if not await self.check_controller(ctx):
 
             return
 
@@ -307,6 +397,11 @@ class Music(commands.Cog):
             return
 
 
+        if not await self.check_controller(ctx):
+
+            return
+
+
         self.player.skip()
 
 
@@ -320,6 +415,11 @@ class Music(commands.Cog):
     async def pause(self, ctx):
 
         if not self.check_command_channel(ctx):
+
+            return
+
+
+        if not await self.check_controller(ctx):
 
             return
 
@@ -341,6 +441,11 @@ class Music(commands.Cog):
             return
 
 
+        if not await self.check_controller(ctx):
+
+            return
+
+
         self.player.resume()
 
 
@@ -354,6 +459,11 @@ class Music(commands.Cog):
     async def stop(self, ctx):
 
         if not self.check_command_channel(ctx):
+
+            return
+
+
+        if not await self.check_controller(ctx):
 
             return
 

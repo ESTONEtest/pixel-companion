@@ -70,11 +70,40 @@ class VoiceSystem(commands.Cog):
 
 
 
+                # Текстовый чат скрыт от всех, кроме создателя комнаты
+                overwrites = {
+
+                    guild.default_role: discord.PermissionOverwrite(
+                        view_channel=False
+                    ),
+
+                    member: discord.PermissionOverwrite(
+                        view_channel=True,
+                        send_messages=True,
+                        read_message_history=True
+                    )
+
+                }
+
+
+                # Бот сохраняет доступ к созданному текстовому каналу
+                if guild.me:
+
+                    overwrites[guild.me] = discord.PermissionOverwrite(
+                        view_channel=True,
+                        send_messages=True,
+                        read_message_history=True
+                    )
+
+
+
                 text = await guild.create_text_channel(
 
                     name=f"💬-{member.name}",
 
-                    category=category
+                    category=category,
+
+                    overwrites=overwrites
 
                 )
 
@@ -138,7 +167,8 @@ class VoiceSystem(commands.Cog):
 ✅ снять запрет
 
 
-ℹ️ Команды доступны только владельцу.
+ℹ️ Команды доступны только владельцу
+и только в этом текстовом канале.
                     """,
 
                     color=discord.Color.blurple()
@@ -217,7 +247,7 @@ class VoiceSystem(commands.Cog):
 
                         channel.guild.text_channels,
 
-                        name=f"💬-{room['channel_name'].replace('🎧 ','')}"
+                        name=f"💬-{room['channel_name'].replace('🎧 ', '')}"
 
                     )
 
@@ -262,6 +292,49 @@ class VoiceSystem(commands.Cog):
 
 
 
+    # Проверяет владельца и личный текстовый канал комнаты
+    def get_owner_room_for_command(
+        self,
+        ctx
+    ):
+
+
+        room = self.get_owner_room(
+            ctx.author.id
+        )
+
+
+        if not room:
+
+            return None
+
+
+
+        text_channel = discord.utils.get(
+
+            ctx.guild.text_channels,
+
+            name=f"💬-{room['channel_name'].replace('🎧 ', '')}"
+
+        )
+
+
+        if text_channel is None:
+
+            return None
+
+
+
+        if ctx.channel.id != text_channel.id:
+
+            return None
+
+
+
+        return room
+
+
+
     # ==================================================
     # RENAME
     # ==================================================
@@ -278,8 +351,8 @@ class VoiceSystem(commands.Cog):
     ):
 
 
-        room = self.get_owner_room(
-            ctx.author.id
+        room = self.get_owner_room_for_command(
+            ctx
         )
 
 
@@ -321,8 +394,8 @@ class VoiceSystem(commands.Cog):
     ):
 
 
-        room = self.get_owner_room(
-            ctx.author.id
+        room = self.get_owner_room_for_command(
+            ctx
         )
 
 
@@ -390,8 +463,8 @@ class VoiceSystem(commands.Cog):
     ):
 
 
-        room = self.get_owner_room(
-            ctx.author.id
+        room = self.get_owner_room_for_command(
+            ctx
         )
 
 
@@ -436,8 +509,8 @@ class VoiceSystem(commands.Cog):
     ):
 
 
-        room = self.get_owner_room(
-            ctx.author.id
+        room = self.get_owner_room_for_command(
+            ctx
         )
 
 
@@ -483,8 +556,8 @@ class VoiceSystem(commands.Cog):
     ):
 
 
-        room = self.get_owner_room(
-            ctx.author.id
+        room = self.get_owner_room_for_command(
+            ctx
         )
 
 
@@ -529,8 +602,8 @@ class VoiceSystem(commands.Cog):
     ):
 
 
-        room = self.get_owner_room(
-            ctx.author.id
+        room = self.get_owner_room_for_command(
+            ctx
         )
 
 
@@ -580,8 +653,8 @@ class VoiceSystem(commands.Cog):
     ):
 
 
-        room = self.get_owner_room(
-            ctx.author.id
+        room = self.get_owner_room_for_command(
+            ctx
         )
 
 

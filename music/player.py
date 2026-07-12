@@ -1,5 +1,6 @@
 import asyncio
 import os
+import random
 import shutil
 
 import discord
@@ -77,6 +78,12 @@ class MusicPlayer:
         self.current_song = None
 
         self.queue = []
+
+        # Полный список треков для повторного запуска альбома
+        self.playlist = []
+
+        # ID пользователя, который ввёл !album
+        self.controller_id = None
 
         self.ctx = None
 
@@ -180,6 +187,17 @@ class MusicPlayer:
             return False
 
 
+        # Запоминаем, кто запустил музыку
+        self.controller_id = ctx.author.id
+
+
+        # Сохраняем альбом для повтора после последнего трека
+        self.playlist.clear()
+
+        self.playlist.extend(
+            songs
+        )
+
 
         self.queue.clear()
 
@@ -208,11 +226,21 @@ class MusicPlayer:
         if not self.queue:
 
 
-            self.current_song = None
+            # Если очередь завершилась — запускаем альбом заново
+            if self.playlist:
 
-            await self.update_panel()
+                self.queue.extend(
+                    self.playlist
+                )
 
-            return
+
+            else:
+
+                self.current_song = None
+
+                await self.update_panel()
+
+                return
 
 
 
@@ -393,10 +421,39 @@ class MusicPlayer:
 
 
 
+    # Перемешивает только треки, которые ещё не играли
+    def shuffle_queue(self):
+
+
+        if len(self.queue) < 2:
+
+            return False
+
+
+
+        random.shuffle(
+            self.queue
+        )
+
+
+
+        asyncio.create_task(
+            self.update_panel()
+        )
+
+
+        return True
+
+
+
 
 
 
     async def stop(self):
+
+
+        # Очищаем альбом, чтобы он не запустился повторно
+        self.playlist.clear()
 
 
         self.queue.clear()
@@ -418,6 +475,10 @@ class MusicPlayer:
 
 
         self.current_song = None
+
+
+        # После остановки музыку может запустить любой пользователь
+        self.controller_id = None
 
 
 
@@ -546,7 +607,7 @@ class MusicPlayer:
                 f"🎵 Сейчас играет:\n"
                 f"`{self.current_song or 'Нет трека'}`\n\n"
 
-                f"📀 Осталось:\n"
+                f"📂 Осталось:\n"
                 f"`{len(self.queue)}`\n\n"
 
                 f"🔊 Громкость:\n"
