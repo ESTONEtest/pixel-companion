@@ -61,7 +61,6 @@ class MusicPlayer:
 
         if channel is None:
 
-
             await ctx.send(
                 "❌ Не найден голосовой канал музыки"
             )
@@ -70,11 +69,7 @@ class MusicPlayer:
 
 
 
-        if not isinstance(
-            channel,
-            discord.VoiceChannel
-        ):
-
+        if not isinstance(channel, discord.VoiceChannel):
 
             await ctx.send(
                 "❌ Этот ID не является голосовым каналом"
@@ -84,29 +79,30 @@ class MusicPlayer:
 
 
 
-        if ctx.voice_client is None:
 
-
-            self.voice_client = await channel.connect()
-
-
-
-        else:
+        if ctx.voice_client:
 
 
             self.voice_client = ctx.voice_client
 
 
-            if self.voice_client.channel != channel:
 
+            if self.voice_client.channel != channel:
 
                 await self.voice_client.move_to(
                     channel
                 )
 
 
+        else:
+
+
+            self.voice_client = await channel.connect()
+
+
 
         return True
+
 
 
 
@@ -126,12 +122,14 @@ class MusicPlayer:
         self.ctx = ctx
 
 
+
         if not await self.connect(
             ctx,
             channel_id
         ):
 
             return False
+
 
 
 
@@ -143,7 +141,9 @@ class MusicPlayer:
         )
 
 
+
         await self.play_next()
+
 
 
         return True
@@ -173,6 +173,7 @@ class MusicPlayer:
 
 
 
+
         song = self.queue.pop(0)
 
 
@@ -187,6 +188,11 @@ class MusicPlayer:
         if not os.path.exists(path):
 
 
+            print(
+                f"Song not found: {path}"
+            )
+
+
             await self.play_next()
 
             return
@@ -195,23 +201,38 @@ class MusicPlayer:
 
 
 
-        source = discord.FFmpegPCMAudio(
 
-            executable=FFMPEG_PATH,
-
-            source=path
-
-        )
+        try:
 
 
+            source = discord.FFmpegPCMAudio(
 
-        source = discord.PCMVolumeTransformer(
+                executable=FFMPEG_PATH,
 
-            source,
+                source=path
 
-            volume=self.volume
+            )
 
-        )
+
+            source = discord.PCMVolumeTransformer(
+
+                source,
+
+                volume=self.volume
+
+            )
+
+
+
+        except Exception as e:
+
+
+            print(
+                f"FFmpeg error: {e}"
+            )
+
+
+            return
 
 
 
@@ -240,6 +261,7 @@ class MusicPlayer:
 
 
 
+
         self.voice_client.play(
 
             source,
@@ -247,6 +269,7 @@ class MusicPlayer:
             after=after
 
         )
+
 
 
 
@@ -273,7 +296,6 @@ class MusicPlayer:
 
             if self.voice_client.is_playing():
 
-
                 self.voice_client.pause()
 
 
@@ -288,7 +310,6 @@ class MusicPlayer:
 
             if self.voice_client.is_paused():
 
-
                 self.voice_client.resume()
 
 
@@ -302,7 +323,6 @@ class MusicPlayer:
 
 
             if self.voice_client.is_playing():
-
 
                 self.voice_client.stop()
 
@@ -323,10 +343,13 @@ class MusicPlayer:
             self.voice_client.stop()
 
 
+
             await self.voice_client.disconnect()
 
 
+
             self.voice_client = None
+
 
 
 
@@ -389,6 +412,7 @@ class MusicPlayer:
 
 
 
+
         asyncio.create_task(
             self.update_panel()
         )
@@ -398,6 +422,7 @@ class MusicPlayer:
 
 
     def get_volume(self):
+
 
         return int(
             self.volume * 100
@@ -428,9 +453,11 @@ class MusicPlayer:
 
 
 
+
     def get_queue(self):
 
         return self.queue
+
 
 
 
@@ -447,6 +474,7 @@ class MusicPlayer:
         if not self.panel_message:
 
             return
+
 
 
 
@@ -482,13 +510,18 @@ class MusicPlayer:
 
 
 
+
         try:
 
+
             await self.panel_message.edit(
+
                 embed=embed
+
             )
 
 
-        except:
+        except Exception:
+
 
             pass
