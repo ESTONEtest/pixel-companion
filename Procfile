@@ -1,1 +1,1 @@
-worker: python main.py
+worker: ffmpeg -version && python main.py
