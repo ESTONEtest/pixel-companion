@@ -11,7 +11,7 @@ import discord
 
 def get_ffmpeg_path():
 
-    # Linux / Railway / Nixpacks
+    # Railway / Linux / Nixpacks
     ffmpeg = shutil.which("ffmpeg")
 
     if ffmpeg:
@@ -19,17 +19,28 @@ def get_ffmpeg_path():
 
 
     # Linux fallback
-    linux_path = "/usr/bin/ffmpeg"
+    linux_paths = [
+        "/usr/bin/ffmpeg",
+        "/usr/local/bin/ffmpeg"
+    ]
 
-    if os.path.exists(linux_path):
-        return linux_path
+
+    for path in linux_paths:
+
+        if os.path.exists(path):
+            return path
 
 
-    # Windows local
-    windows_ffmpeg = r"D:\ffmpeg-8.1.2-essentials_build\bin\ffmpeg.exe"
+
+    # Windows local fallback
+    windows_ffmpeg = (
+        r"D:\ffmpeg-8.1.2-essentials_build\bin\ffmpeg.exe"
+    )
+
 
     if os.path.exists(windows_ffmpeg):
         return windows_ffmpeg
+
 
 
     return None
@@ -38,7 +49,10 @@ def get_ffmpeg_path():
 
 FFMPEG_PATH = get_ffmpeg_path()
 
-print(f"🎵 FFmpeg path: {FFMPEG_PATH}")
+
+print(
+    f"🎵 FFmpeg path: {FFMPEG_PATH}"
+)
 
 
 # ==================================================
@@ -183,6 +197,7 @@ class MusicPlayer:
 
 
 
+
     # ==================================================
     # PLAY NEXT
     # ==================================================
@@ -198,6 +213,7 @@ class MusicPlayer:
             await self.update_panel()
 
             return
+
 
 
 
@@ -227,6 +243,7 @@ class MusicPlayer:
 
 
 
+
         if not FFMPEG_PATH:
 
 
@@ -234,7 +251,9 @@ class MusicPlayer:
                 "❌ FFmpeg не найден"
             )
 
+
             return
+
 
 
 
@@ -244,9 +263,9 @@ class MusicPlayer:
 
             audio = discord.FFmpegPCMAudio(
 
-                executable=FFMPEG_PATH,
-
                 source=path,
+
+                executable=FFMPEG_PATH,
 
                 options="-vn"
 
@@ -262,6 +281,7 @@ class MusicPlayer:
             )
 
 
+
         except Exception as e:
 
 
@@ -269,7 +289,9 @@ class MusicPlayer:
                 f"❌ FFmpeg error: {e}"
             )
 
+
             return
+
 
 
 
@@ -283,6 +305,7 @@ class MusicPlayer:
                 print(
                     f"Music error: {error}"
                 )
+
 
 
             if self.ctx:
@@ -305,6 +328,8 @@ class MusicPlayer:
 
 
 
+
+
         self.voice_client.play(
 
             source,
@@ -324,7 +349,9 @@ class MusicPlayer:
         )
 
 
+
         await self.update_panel()
+
 
 
 
@@ -368,6 +395,7 @@ class MusicPlayer:
 
 
 
+
     async def stop(self):
 
 
@@ -399,6 +427,7 @@ class MusicPlayer:
 
 
 
+
     # ==================================================
     # VOLUME
     # ==================================================
@@ -414,11 +443,17 @@ class MusicPlayer:
 
 
         self.volume = max(
+
             0,
+
             min(
+
                 1,
+
                 self.volume
+
             )
+
         )
 
 
@@ -434,7 +469,9 @@ class MusicPlayer:
 
             ):
 
+
                 self.voice_client.source.volume = self.volume
+
 
 
 
@@ -463,10 +500,15 @@ class MusicPlayer:
     def get_current(self):
 
         return (
+
             self.current_song
+
             if self.current_song
+
             else "Ничего не играет"
+
         )
+
 
 
 
@@ -474,6 +516,7 @@ class MusicPlayer:
     def get_queue(self):
 
         return self.queue
+
 
 
 
@@ -489,6 +532,8 @@ class MusicPlayer:
         if not self.panel_message:
 
             return
+
+
 
 
 
@@ -512,6 +557,7 @@ class MusicPlayer:
             color=discord.Color.blurple()
 
         )
+
 
 
         embed.set_footer(

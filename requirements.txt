@@ -1,6 +1,7 @@
-discord.py
+discord.py[voice]
 python-dotenv
 aiohttp
 requests
 PyNaCl
 davey
+audioop-lts

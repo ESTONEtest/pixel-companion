@@ -1,5 +1,7 @@
 import asyncio
 import traceback
+import shutil
+import os
 
 import discord
 from discord.ext import commands
@@ -9,9 +11,33 @@ from utils.logger import logger
 
 
 # ==================================================
+# FFMPEG CHECK
+# ==================================================
 
+def check_ffmpeg():
+
+    ffmpeg = shutil.which("ffmpeg")
+
+    if ffmpeg:
+        logger.info(
+            f"🎵 FFmpeg найден: {ffmpeg}"
+        )
+
+        return ffmpeg
+
+    else:
+        logger.error(
+            "❌ FFmpeg не найден"
+        )
+
+        return None
+
+
+FFMPEG_PATH = check_ffmpeg()
+
+
+# ==================================================
 # TOKEN CHECK
-
 # ==================================================
 
 if not TOKEN:
@@ -22,18 +48,14 @@ if not TOKEN:
 
 
 # ==================================================
-
 # DATABASE
-
 # ==================================================
 
 from managers.database import database
 
 
 # ==================================================
-
 # BOT
-
 # ==================================================
 
 intents = discord.Intents.default()
@@ -51,9 +73,7 @@ bot = commands.Bot(
 
 
 # ==================================================
-
 # EVENTS
-
 # ==================================================
 
 @bot.event
@@ -89,9 +109,7 @@ async def on_ready():
 
 
 # ==================================================
-
 # COMMAND ERRORS
-
 # ==================================================
 
 @bot.event
@@ -113,9 +131,7 @@ async def on_command_error(
 
 
 # ==================================================
-
 # COGS
-
 # ==================================================
 
 async def load_cogs():
@@ -161,9 +177,7 @@ async def load_cogs():
 
     for cog in cogs:
 
-
         try:
-
 
             await bot.load_extension(
                 f"cogs.{cog}"
@@ -177,22 +191,18 @@ async def load_cogs():
 
         except Exception as error:
 
-
             logger.error(
                 f"❌ Failed loading {cog}: {error}"
             )
 
 
 # ==================================================
-
 # START
-
 # ==================================================
 
 async def main():
 
     async with bot:
-
 
         await load_cogs()
 
