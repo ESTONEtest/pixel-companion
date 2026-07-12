@@ -8,7 +8,7 @@ import discord
 # FFMPEG
 # ==================================================
 
-FFMPEG_PATH = r"D:\ffmpeg-8.1.2-essentials_build\bin\ffmpeg.exe"
+FFMPEG_PATH = "ffmpeg"
 
 
 # ==================================================
