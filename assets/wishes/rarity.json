@@ -1,0 +1,16 @@
+{
+    "common": {
+        "name": "⚪ Обычное",
+        "chance": 70
+    },
+
+    "rare": {
+        "name": "🔵 Редкое",
+        "chance": 25
+    },
+
+    "legendary": {
+        "name": "🟣 Легендарное",
+        "chance": 5
+    }
+}

@@ -139,6 +139,7 @@ async def load_cogs():
     cogs = [
 
         "profile",
+
         "events",
 
         "rpg",
@@ -146,6 +147,7 @@ async def load_cogs():
         "level",
 
         "inventory",
+
         "items",
 
         "loot",
@@ -170,7 +172,9 @@ async def load_cogs():
 
         "game_roles",
 
-        "music"
+        "music",
+
+        "wishes"
 
     ]
 
@@ -210,7 +214,6 @@ async def main():
         await bot.start(
             TOKEN
         )
-
 
 
 if __name__ == "__main__":
